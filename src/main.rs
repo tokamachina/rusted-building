@@ -37,44 +37,120 @@ fn main() -> Result<()> {
     })?;
 
     let jsonreader = &fs::File::open(Path::new("ggpk_specs.json")).expect("fileopen");
-    let _specs: HashMap<String, Vec<GGPKColumn>> =
+    let mut specs: HashMap<String, Vec<GGPKColumn>> =
         serde_json::from_reader(jsonreader).expect("ser fail");
+    let mut ggpk: HashMap<String, Vec<GGPKColumn>> = HashMap::new();
+    for (data_name, data_set) in specs.drain() {
+        for column in data_set {
 
+        }
+
+    }
     Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 struct GGPKColumn {
-    name: String,
-    width: u32,
+    name: Option<String>,
+    width: usize,
     column_type: String,
     column_is_list: bool,
     ref_to: Option<String>,
     data: Option<GGPKColumnData>,
+    offset: Option<usize>,
+}
+
+struct GGPKData {
+    name: String,
+    data: Vec<GGPKColumn>,
+    total_width: usize,
+    row_count: usize,
+    col_count: usize,
+}
+
+impl GGPKData {
+    fn new(mut name: String, mut newcols: Vec<GGPKColumn>) -> GGPKData {
+        let dat64 = &fs::read(String::from(".\\data\\ggpk\\") + &name + &String::from(".dat64")).expect("datread");
+        let mut total_width: usize = 0;
+        let col_count = newcols.len();
+        let datafile = 
+        for mut ggpkcol in newcols {
+            ggpkcol.offset = Some(total_width.clone());
+            total_width += ggpkcol.width;
+        };
+        GGPKData { 
+            name, 
+            col_count,
+            row_count: todo!(), 
+            data: todo!(), 
+            total_width,
+    }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 enum GGPKColumnData {
     GGPKFloat(Vec<f64>),
     GGPKInterval(Vec<(i32, i32)>),
-    GGPKKey(Vec<Vec<u64>>),
+    GGPKKey(Vec<u64>),
     GGPKInt(Vec<i32>),
     GGPKShortKey(Vec<u32>),
     GGPKBool(Vec<bool>),
     GGPKString(Vec<String>),
     GGPKEnum(Vec<u32>),
     GGPKUInt(Vec<u32>),
+    GGPKFloatList(Vec<Vec<f64>>),
+    GGPKIntervalList(Vec<Vec<(i32, i32)>>),
+    GGPKKeyList(Vec<Vec<u64>>),
+    GGPKIntList(Vec<Vec<i32>>),
+    GGPKShortKeyList(Vec<Vec<u32>>),
+    GGPKBoolList(Vec<Vec<bool>>),
+    GGPKStringList(Vec<Vec<String>>),
+    GGPKEnumList(Vec<Vec<u32>>),
+    GGPKUIntList(Vec<Vec<u32>>),
 }
+
+// let self.data = match self.column_is_list {
+//     true => match self.column_type.expect("list coltype") {
+//         "Key" => todo!(),
+//         "Enum" => todo!(),
+//         "Interval" => todo!(),
+//         "Bool" => todo!(),
+//         "String" => todo!(),
+//         "UInt" => todo!(),
+//         "Float" => todo!(),
+//         "Int" => todo!(),
+//         "ShortKey" => todo!(),
+//     },
+//     false => match self.column_type.expect("nonlist coltype") {
+//         "Key" => todo!(),
+//         "Enum" => todo!(),
+//         "Interval" => todo!(),
+//         "Bool" => todo!(),
+//         "String" => todo!(),
+//         "UInt" => todo!(),
+//         "Float" => todo!(),
+//         "Int" => todo!(),
+//         "ShortKey" => todo!(),
+//     }
+// };
 
 impl From<Table<'_>> for GGPKColumn {
     fn from(s: Table) -> GGPKColumn {
         GGPKColumn {
-            name: s.get("name").expect("bad name"),
+            name: match s.get::<&str, String>("name").expect("bad name").as_str() {
+                "" => None,
+                x => Some(x.to_string())
+            },
             width: s.get("width").expect("bad width"),
             column_type: s.get("type").expect("bad column_type"),
             column_is_list: s.get("list").expect("bad islist"),
-            ref_to: s.get("refTo").expect("bad refTo"),
+            ref_to: match s.get::<&str, String>("refTo").expect("bad refTo").as_str() {
+                "" => None,
+                x => Some(x.to_string())
+            },
             data: None,
+            offset: None,
         }
     }
 }
