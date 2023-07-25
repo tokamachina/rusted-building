@@ -1,4 +1,4 @@
-# rusty-fork
+# rusted-building
 
 This is a learning project in which I try to implement sporadic bits of PathOfBuilding functionality using Rust.
 The looooong-term goal is to have a functioning fork of PoB built (almost) entirely in Rust.
