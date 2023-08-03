@@ -4,6 +4,8 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
+const GGPKINTLEN: usize = 4;
+
 fn main() -> Result<()> {
     let pob_lua = Lua::new();
     pob_lua.context(|lua_ctx| {
@@ -70,10 +72,11 @@ struct GGPKData {
 
 impl GGPKData {
     fn new(mut name: String, mut newcols: Vec<GGPKColumn>) -> GGPKData {
-        let dat64 = &fs::read(String::from(".\\data\\ggpk\\") + &name + &String::from(".dat64")).expect("datread");
-        let mut total_width: usize = 0;
+        let mut dat64 = &fs::read(String::from(".\\data\\ggpk\\") + &name + &String::from(".dat64")).expect("datread");
+        let (row_count, dat64 ): (&[u8;GGPKINTLEN], &[u8]) = dat64.split_at(GGPKINTLEN);
+        let row_count = as_u32_be(row_count);
         let col_count = newcols.len();
-        let datafile = 
+        let mut total_width: usize = 0;
         for mut ggpkcol in newcols {
             ggpkcol.offset = Some(total_width.clone());
             total_width += ggpkcol.width;
@@ -154,3 +157,11 @@ impl From<Table<'_>> for GGPKColumn {
         }
     }
 }
+
+fn as_u32_be(array: &[u8; 4]) -> u32 {
+    ((array[0] as u32) << 24) +
+    ((array[1] as u32) << 16) +
+    ((array[2] as u32) <<  8) +
+    ((array[3] as u32) <<  0)
+}
+
